@@ -8,11 +8,12 @@ import fetchJsonp from 'fetch-jsonp';
 const instafetch = {};
 const supports = !!document.querySelector && !!document.addEventListener;
 let settings, checked, url, targetEl, article, a, figure, img, div, p;
-const baseUrl = 'https://api.instagram.com/v1/users/self/media/recent/?access_token=';
+const baseUrl = 'https://zw8g57ed5b.execute-api.us-west-2.amazonaws.com/prod_troylee/media/';
 
 // Default settings
 const defaults = {
-  accessToken: null,
+  baseUrl: null,
+  userName: null,
   target: 'instafetch',
   numOfPics: 20,
   caption: false
@@ -69,8 +70,8 @@ const extend = (defaults, options) => {
  * @returns {boolean} Return false if incorrect
  */
 const checkSettings = options => {
-  if (typeof options.accessToken !== 'string') {
-    console.error('accessToken must be a string.');
+  if (typeof options.userName !== 'string') {
+    console.error('userName must be a string.');
     return false;
   }
   if (typeof options.target !== 'string') {
@@ -96,7 +97,9 @@ const checkSettings = options => {
  * @returns {Object} JSON data
  */
 const fetchFeed = options => {
-  url = `${baseUrl + options.accessToken}&count=${options.numOfPics}&callback=?`;
+  const newBaseUrl = options.baseUrl || baseUrl;
+
+  url = `${newBaseUrl + options.userName}?count=${options.numOfPics}`;
 
   if (!window.Promise) {
     window.Promise = Promise;
@@ -129,11 +132,15 @@ const displayFeed = (json, options) => {
   json.data.forEach(data => {
     article = document.createElement('article');
     a = document.createElement('a');
-    a.href = data.link;
+    a.href = data.permalink;
     a.target = '_blank';
     figure = document.createElement('figure');
     img = document.createElement('img');
-    img.src = data.images.standard_resolution.url;
+    if (data.media_type === 'VIDEO') {
+      img.src = data.thumbnail_url;
+    } else {
+      img.src = data.media_url;
+    }
     figure.appendChild(img);
     a.appendChild(figure);
     article.appendChild(a);
